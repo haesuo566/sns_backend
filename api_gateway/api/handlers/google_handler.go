@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"context"
 	"crypto/rand"
 	"encoding/base64"
 	"os"
@@ -8,6 +9,7 @@ import (
 	"time"
 
 	"github.com/gofiber/fiber/v3"
+	"github.com/haesuo566/sns_backend/api_gateway/pkg/domains/auth/google"
 	"github.com/valyala/fasthttp"
 	"golang.org/x/oauth2"
 )
@@ -18,6 +20,7 @@ type GoogleHandler interface {
 }
 
 type googleHandler struct {
+	googleService google.GoogleService
 }
 
 var googleConfig oauth2.Config = oauth2.Config{
@@ -34,9 +37,11 @@ var googleConfig oauth2.Config = oauth2.Config{
 var googleOnce sync.Once
 var googleInstance GoogleHandler = nil
 
-func NewGoogleHandler() GoogleHandler {
+func NewGoogleHandler(googleServive google.GoogleService) GoogleHandler {
 	googleOnce.Do(func() {
-		googleInstance = &googleHandler{}
+		googleInstance = &googleHandler{
+			googleServive,
+		}
 	})
 
 	return googleInstance
@@ -50,6 +55,29 @@ func (g *googleHandler) Login(ctx fiber.Ctx) error {
 }
 
 func (g *googleHandler) Callback(ctx fiber.Ctx) error {
+	state := ctx.Cookies("state")
+	if ctx.FormValue("state") != state {
+		ctx.Context().Redirect("/google/login", fasthttp.StatusBadRequest)
+		return nil
+	}
+
+	code := ctx.FormValue("code")
+	token, err := googleConfig.Exchange(context.Background(), code)
+	if err != nil {
+		ctx.Context().Redirect("/google/login", fasthttp.StatusBadRequest)
+		return nil
+	}
+
+	g.googleService.Test(token)
+	// if err != nil {
+	// 	ctx.Context().Redirect("/google/login", fasthttp.StatusBadRequest)
+	// 	return exception.WrapError(err.Error())
+	// }
+
+	// responseToken, err := jwt.GenerateResponseToken(user)
+	// if err != nil {
+	// 	return exception.WrapError(err.Error())
+	// }
 
 	return nil
 }
