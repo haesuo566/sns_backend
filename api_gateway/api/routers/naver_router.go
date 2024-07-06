@@ -4,20 +4,20 @@ import (
 	"github.com/gofiber/fiber/v3"
 	"github.com/haesuo566/sns_backend/api_gateway/api/auth/handlers"
 	"github.com/haesuo566/sns_backend/api_gateway/pkg/domains/auth"
-	"github.com/haesuo566/sns_backend/api_gateway/pkg/domains/auth/google"
+	"github.com/haesuo566/sns_backend/api_gateway/pkg/domains/auth/naver"
 	"github.com/haesuo566/sns_backend/api_gateway/pkg/utils/db"
 	"github.com/haesuo566/sns_backend/api_gateway/pkg/utils/jwt"
 )
 
-func GoogleRouter(router fiber.Router) {
+func NaverRouter(router fiber.Router) {
 	sql := db.NewDatabase()
 	authRepository := auth.NewRepository(sql)
 
-	googleService := google.NewService(authRepository)
+	googleService := naver.NewService(authRepository)
 	jwtUtil := jwt.New()
 
-	handler := handlers.NewGoogleHandler(googleService, jwtUtil)
+	handler := handlers.NewNaverHandler(googleService, jwtUtil)
 
-	router.Get("/google/login", handler.Login)
-	router.Get("/google/callback", handler.Callback)
+	router.Get("/naver/login", handler.Login)
+	router.Get("/naver/callback", handler.Callback)
 }

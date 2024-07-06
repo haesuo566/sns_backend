@@ -5,66 +5,77 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"strings"
 	"sync"
 
+	"github.com/google/uuid"
+	"github.com/haesuo566/sns_backend/api_gateway/pkg/domains/auth"
 	"github.com/haesuo566/sns_backend/api_gateway/pkg/entities"
 	e "github.com/haesuo566/sns_backend/api_gateway/pkg/utils/erorr"
 	"golang.org/x/oauth2"
 )
 
-type GoogleService interface {
-	Test(*oauth2.Token) (*entities.User, error)
+type service struct {
+	authRepository auth.Repository
 }
 
-type googleService struct {
-	googleRepository GoogleRepository
-}
-
-type googleUserInfo struct {
+type userInfo struct {
 	Id            string `json:"id"`
 	Email         string `json:"email"`
 	VerifiedEmail bool   `json:"verified_email"`
-	Name          string `json:"name"`
-	GivenName     string `json:"given_name"`
-	FamilyName    string `json:"family_name"`
 	Picture       string `json:"picture"`
-	Locale        string `json:"locale"`
 }
 
 var serviceOnce sync.Once
-var serviceInstance GoogleService = nil
+var serviceInstance auth.Service
 
-func NewGoogleService(googleRepository GoogleRepository) GoogleService {
+func NewService(authRepository auth.Repository) auth.Service {
 	serviceOnce.Do(func() {
-		serviceInstance = &googleService{
-			googleRepository,
+		serviceInstance = &service{
+			authRepository,
 		}
 	})
 
 	return serviceInstance
 }
 
-func (g *googleService) Test(token *oauth2.Token) (*entities.User, error) {
+func (g *service) Test(token *oauth2.Token) (*entities.User, error) {
 	url := fmt.Sprintf("https://www.googleapis.com/oauth2/v2/userinfo?access_token=%s", token.AccessToken)
 
 	// User Infomation Request
 	response, err := http.Get(url)
 	if err != nil {
-		return nil, e.Wrap(err.Error())
+		return nil, e.Wrap(err)
 	}
 	defer response.Body.Close()
 
 	body, err := io.ReadAll(response.Body)
 	if err != nil {
-		return nil, e.Wrap(err.Error())
+		return nil, e.Wrap(err)
 	}
 
-	googleUserInfo := googleUserInfo{}
-	if err := json.Unmarshal(body, &googleUserInfo); err != nil {
-		return nil, e.Wrap(err.Error())
+	userInfo := userInfo{}
+	if err := json.Unmarshal(body, &userInfo); err != nil {
+		return nil, e.Wrap(err)
 	}
 
-	// user := &entities.User{}
+	var randomString string
+	if rand, err := uuid.NewRandom(); err != nil {
+		return nil, e.Wrap(err)
+	} else {
+		randomString = strings.ReplaceAll(rand.String(), "-", "")
+	}
 
-	return nil, nil
+	googleUser := &entities.User{
+		Name:      randomString,
+		Email:     userInfo.Email,
+		AccountId: fmt.Sprintf("@%s", randomString),
+	}
+
+	user, err := g.authRepository.Save(googleUser)
+	if err != nil {
+		return nil, e.Wrap(err)
+	}
+
+	return user, nil
 }
