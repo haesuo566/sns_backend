@@ -1,22 +1,25 @@
 package routers
 
 import (
-	"github.com/gofiber/fiber/v3"
-	"github.com/haesuo566/sns_backend/api_gateway/api/auth/handlers"
+	"github.com/gofiber/fiber/v2"
+	"github.com/haesuo566/sns_backend/api_gateway/api/handlers"
 	"github.com/haesuo566/sns_backend/api_gateway/pkg/domains/auth"
 	"github.com/haesuo566/sns_backend/api_gateway/pkg/domains/auth/naver"
 	"github.com/haesuo566/sns_backend/api_gateway/pkg/utils/db"
 	"github.com/haesuo566/sns_backend/api_gateway/pkg/utils/jwt"
+	"github.com/haesuo566/sns_backend/api_gateway/pkg/utils/redis"
 )
 
 func NaverRouter(router fiber.Router) {
 	sql := db.NewDatabase()
 	authRepository := auth.NewRepository(sql)
 
-	googleService := naver.NewService(authRepository)
 	jwtUtil := jwt.New()
+	redisUtil := redis.New()
 
-	handler := handlers.NewNaverHandler(googleService, jwtUtil)
+	googleService := naver.NewService(authRepository, jwtUtil, redisUtil)
+
+	handler := handlers.NewNaverHandler(googleService)
 
 	router.Get("/naver/login", handler.Login)
 	router.Get("/naver/callback", handler.Callback)

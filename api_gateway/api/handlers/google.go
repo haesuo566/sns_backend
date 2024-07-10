@@ -5,25 +5,23 @@ import (
 	"os"
 	"sync"
 
-	"github.com/gofiber/fiber/v3"
-	authHandler "github.com/haesuo566/sns_backend/api_gateway/api/auth"
+	"github.com/gofiber/fiber/v2"
+	"github.com/haesuo566/sns_backend/api_gateway/api/impls"
 	"github.com/haesuo566/sns_backend/api_gateway/pkg/domains/auth"
 	e "github.com/haesuo566/sns_backend/api_gateway/pkg/utils/erorr"
-	"github.com/haesuo566/sns_backend/api_gateway/pkg/utils/jwt"
 	"golang.org/x/oauth2"
 )
 
 type googleHandler struct {
 	googleService auth.Service
-	jwtUtil       jwt.JwtUtil
 }
 
 var googleConfig oauth2.Config
 
 var googleOnce sync.Once
-var googleInstance authHandler.Handler = nil
+var googleInstance impls.AuthHandler
 
-func NewGoogleHandler(googleServive auth.Service, jwtUtil jwt.JwtUtil) authHandler.Handler {
+func NewGoogleHandler(googleServive auth.Service) impls.AuthHandler {
 	googleOnce.Do(func() {
 		googleConfig = oauth2.Config{
 			ClientID:     os.Getenv("GOOGLE_ID"),
@@ -38,20 +36,19 @@ func NewGoogleHandler(googleServive auth.Service, jwtUtil jwt.JwtUtil) authHandl
 
 		googleInstance = &googleHandler{
 			googleServive,
-			jwtUtil,
 		}
 	})
 
 	return googleInstance
 }
 
-func (g *googleHandler) Login(ctx fiber.Ctx) error {
-	state := authHandler.GenerateToken(ctx)
+func (g *googleHandler) Login(ctx *fiber.Ctx) error {
+	state := impls.GenerateToken(ctx)
 	url := googleConfig.AuthCodeURL(state)
-	return ctx.Redirect().Status(fiber.StatusTemporaryRedirect).To(url)
+	return ctx.Redirect(url, fiber.StatusTemporaryRedirect)
 }
 
-func (g *googleHandler) Callback(ctx fiber.Ctx) error {
+func (g *googleHandler) Callback(ctx *fiber.Ctx) error {
 	state := ctx.Cookies("state")
 	if ctx.FormValue("state") != state {
 		return nil
@@ -63,15 +60,10 @@ func (g *googleHandler) Callback(ctx fiber.Ctx) error {
 		return e.Wrap(err)
 	}
 
-	user, err := g.googleService.Test(token)
+	jwtToken, err := g.googleService.GetJwtToken(token)
 	if err != nil {
 		return e.Wrap(err)
 	}
 
-	allToken, err := g.jwtUtil.GenerateToken(user)
-	if err != nil {
-		return e.Wrap(err)
-	}
-
-	return ctx.JSON(allToken)
+	return ctx.JSON(jwtToken)
 }

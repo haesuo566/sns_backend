@@ -17,23 +17,18 @@ type Database interface {
 	Begin() (*sql.Tx, error)
 }
 
-var mutex sync.Mutex
+var once sync.Once
 var instance Database = nil
 
 func NewDatabase() Database {
-	if instance == nil {
-		mutex.Lock()
-		defer mutex.Unlock()
-
+	once.Do(func() {
 		url := os.Getenv("DATABASE_URL")
 
-		d, err := sql.Open("mysql", url)
+		var err error
+		instance, err = sql.Open("mysql", url)
 		if err != nil {
 			panic(err)
 		}
-
-		instance = d
-	}
-
+	})
 	return instance
 }

@@ -5,24 +5,23 @@ import (
 	"os"
 	"sync"
 
-	"github.com/gofiber/fiber/v3"
-	authHandler "github.com/haesuo566/sns_backend/api_gateway/api/auth"
+	"github.com/gofiber/fiber/v2"
+	"github.com/haesuo566/sns_backend/api_gateway/api/impls"
 	"github.com/haesuo566/sns_backend/api_gateway/pkg/domains/auth"
 	e "github.com/haesuo566/sns_backend/api_gateway/pkg/utils/erorr"
-	"github.com/haesuo566/sns_backend/api_gateway/pkg/utils/jwt"
 	"golang.org/x/oauth2"
 )
 
 type naverHandler struct {
 	naverSerivce auth.Service
-	jwtUtil      jwt.JwtUtil
 }
 
 var naverConfig oauth2.Config
-var naverOnce sync.Once
-var naverInstance authHandler.Handler = nil
 
-func NewNaverHandler(naverSerivce auth.Service, jwtUtil jwt.JwtUtil) authHandler.Handler {
+var naverOnce sync.Once
+var naverInstance impls.AuthHandler
+
+func NewNaverHandler(naverSerivce auth.Service) impls.AuthHandler {
 	naverOnce.Do(func() {
 		naverConfig = oauth2.Config{
 			ClientID:     os.Getenv("NAVER_ID"),
@@ -37,20 +36,19 @@ func NewNaverHandler(naverSerivce auth.Service, jwtUtil jwt.JwtUtil) authHandler
 
 		naverInstance = &naverHandler{
 			naverSerivce,
-			jwtUtil,
 		}
 	})
 
 	return naverInstance
 }
 
-func (n *naverHandler) Login(ctx fiber.Ctx) error {
-	state := authHandler.GenerateToken(ctx)
+func (n *naverHandler) Login(ctx *fiber.Ctx) error {
+	state := impls.GenerateToken(ctx)
 	url := naverConfig.AuthCodeURL(state)
-	return ctx.Redirect().Status(fiber.StatusTemporaryRedirect).To(url)
+	return ctx.Redirect(url, fiber.StatusTemporaryRedirect)
 }
 
-func (n *naverHandler) Callback(ctx fiber.Ctx) error {
+func (n *naverHandler) Callback(ctx *fiber.Ctx) error {
 	state := ctx.Cookies("state")
 	if ctx.FormValue("state") != state {
 		return nil
@@ -62,15 +60,10 @@ func (n *naverHandler) Callback(ctx fiber.Ctx) error {
 		return e.Wrap(err)
 	}
 
-	user, err := n.naverSerivce.Test(token)
+	jwtToken, err := n.naverSerivce.GetJwtToken(token)
 	if err != nil {
 		return e.Wrap(err)
 	}
 
-	allToken, err := n.jwtUtil.GenerateToken(user)
-	if err != nil {
-		return e.Wrap(err)
-	}
-
-	return ctx.JSON(allToken)
+	return ctx.JSON(jwtToken)
 }

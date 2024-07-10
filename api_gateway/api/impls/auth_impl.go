@@ -1,19 +1,19 @@
-package authHandler
+package impls
 
 import (
 	"crypto/rand"
 	"encoding/base64"
 	"time"
 
-	"github.com/gofiber/fiber/v3"
+	"github.com/gofiber/fiber/v2"
 )
 
-type Handler interface {
-	Login(ctx fiber.Ctx) error
-	Callback(ctx fiber.Ctx) error
+type AuthHandler interface {
+	Login(*fiber.Ctx) error
+	Callback(*fiber.Ctx) error
 }
 
-func GenerateToken(ctx fiber.Ctx) string {
+func GenerateToken(ctx *fiber.Ctx) string {
 	data := make([]byte, 16)
 	rand.Read(data)
 	csrfToken := base64.URLEncoding.EncodeToString(data)

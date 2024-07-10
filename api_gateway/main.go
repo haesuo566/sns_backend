@@ -1,8 +1,8 @@
 package main
 
 import (
-	"github.com/gofiber/fiber/v3"
-	"github.com/gofiber/fiber/v3/middleware/logger"
+	"github.com/gofiber/fiber/v2"
+	"github.com/gofiber/fiber/v2/middleware/logger"
 	"github.com/haesuo566/sns_backend/api_gateway/api/routers"
 	"github.com/joho/godotenv"
 )
@@ -22,6 +22,11 @@ func main() {
 
 	routers.GoogleRouter(authRouter)
 	routers.NaverRouter(authRouter)
+	routers.KakaoRouter(authRouter)
+
+	tokenRouter := app.Group("/token")
+
+	routers.TokenRouter(tokenRouter)
 
 	if err := app.Listen(":12121"); err != nil {
 		panic(err)
