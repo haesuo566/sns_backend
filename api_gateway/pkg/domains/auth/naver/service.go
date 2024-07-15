@@ -2,12 +2,13 @@ package naver
 
 import (
 	"context"
+	"crypto/sha256"
+	"encoding/hex"
 	"encoding/json"
-	"fmt"
 	"io"
 	"net/http"
-	"strings"
 	"sync"
+	"time"
 
 	"github.com/google/uuid"
 	"github.com/haesuo566/sns_backend/api_gateway/pkg/domains/auth"
@@ -72,18 +73,16 @@ func (s *service) GetJwtToken(token *oauth2.Token) (*jwt.AllToken, error) {
 		return nil, err
 	}
 
-	var randomString string
-	if rand, err := uuid.NewRandom(); err != nil {
+	h := sha256.New()
+	if _, err := h.Write([]byte(userInfo.Response.Email)); err != nil {
 		return nil, e.Wrap(err)
-	} else {
-		randomString = strings.ReplaceAll(rand.String(), "-", "")
 	}
 
 	return s.SaveUser(&entities.User{
-		Name:      userInfo.Response.Name,
-		Email:     userInfo.Response.Email,
-		AccountId: fmt.Sprintf("@%s", randomString),
-		// Provider: user.NAVER,
+		Name:     userInfo.Response.Name,
+		Email:    hex.EncodeToString(h.Sum(nil)),
+		UserTag:  uuid.NewString(),
+		Platform: "NAVER",
 	})
 }
 
@@ -93,7 +92,7 @@ func (s *service) SaveUser(user *entities.User) (*jwt.AllToken, error) {
 		return nil, e.Wrap(err)
 	}
 
-	jwtToken, err := s.jwtUtil.GenerateAllToken()
+	jwtToken, err := s.jwtUtil.GenerateJwtToken()
 	if err != nil {
 		return nil, e.Wrap(err)
 	}
@@ -103,7 +102,7 @@ func (s *service) SaveUser(user *entities.User) (*jwt.AllToken, error) {
 		return nil, e.Wrap(err)
 	}
 
-	if err := s.redisUtil.Set(context.Background(), jwtToken.RefreshToken, u, 0).Err(); err != nil {
+	if err := s.redisUtil.Set(context.Background(), jwtToken.AccessToken, u, time.Minute*30).Err(); err != nil {
 		return nil, e.Wrap(err)
 	}
 

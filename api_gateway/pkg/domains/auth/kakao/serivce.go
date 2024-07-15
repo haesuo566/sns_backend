@@ -3,10 +3,10 @@ package kakao
 import (
 	"context"
 	"encoding/json"
-	"fmt"
 	"io"
 	"net/http"
 	"sync"
+	"time"
 
 	"github.com/google/uuid"
 	"github.com/haesuo566/sns_backend/api_gateway/pkg/domains/auth"
@@ -78,17 +78,11 @@ func (s *service) GetJwtToken(token *oauth2.Token) (*jwt.AllToken, error) {
 		return nil, e.Wrap(err)
 	}
 
-	var randomString string
-	if rand, err := uuid.NewRandom(); err != nil {
-		return nil, e.Wrap(err)
-	} else {
-		randomString = rand.String()
-	}
-
 	return s.SaveUser(&entities.User{
-		Name:      userInfo.Properties.Nickname,
-		Email:     "", // 카카오 심사 통과시 얻을 수 있음
-		AccountId: fmt.Sprintf("@%s", randomString),
+		Name:     userInfo.Properties.Nickname,
+		Email:    "", // 카카오 심사 통과시 얻을 수 있음
+		UserTag:  uuid.NewString(),
+		Platform: "KAKAO",
 	})
 }
 
@@ -98,7 +92,7 @@ func (s *service) SaveUser(user *entities.User) (*jwt.AllToken, error) {
 		return nil, e.Wrap(err)
 	}
 
-	jwtToken, err := s.jwtUtil.GenerateAllToken()
+	jwtToken, err := s.jwtUtil.GenerateJwtToken()
 	if err != nil {
 		return nil, e.Wrap(err)
 	}
@@ -108,7 +102,7 @@ func (s *service) SaveUser(user *entities.User) (*jwt.AllToken, error) {
 		return nil, e.Wrap(err)
 	}
 
-	if err := s.redisUtil.Set(context.Background(), jwtToken.RefreshToken, u, 0).Err(); err != nil {
+	if err := s.redisUtil.Set(context.Background(), jwtToken.AccessToken, u, time.Minute*30).Err(); err != nil {
 		return nil, e.Wrap(err)
 	}
 
