@@ -24,9 +24,9 @@ func main() {
 	routers.NaverRouter(authRouter)
 	routers.KakaoRouter(authRouter)
 
-	tokenRouter := app.Group("/token")
+	tokenRouter := app.Group("/common")
 
-	routers.TokenRouter(tokenRouter)
+	routers.CommonRouter(tokenRouter)
 
 	if err := app.Listen(":12121"); err != nil {
 		panic(err)
