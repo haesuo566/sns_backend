@@ -37,7 +37,7 @@ func (a *repository) Save(user *entities.User) (*entities.User, error) {
 		return nil, e.Wrap(err)
 	}
 
-	rows, err := tx.QueryContext(context.Background(), "select id, name, email, created_at, account_id from sns_user where email = ?", user.Email)
+	rows, err := tx.QueryContext(context.Background(), "select id, name, email, created_at, user_tag, platform from sns_user where email = ?", user.Email)
 	if err != nil {
 		return nil, e.Wrap(err)
 	}
@@ -45,14 +45,14 @@ func (a *repository) Save(user *entities.User) (*entities.User, error) {
 
 	if rows.Next() {
 		user := &entities.User{}
-		if err := rows.Scan(&user.Id, &user.Name, &user.Email, &user.CreatedAt, &user.AccountId); err != nil {
+		if err := rows.Scan(&user.Id, &user.Name, &user.Email, &user.CreatedAt, &user.UserTag, &user.Platform); err != nil {
 			return nil, e.Wrap(err)
 		}
 
 		return user, nil
 	}
 
-	result, err := tx.ExecContext(context.Background(), "insert into sns_user(name, email, account_id) values(?, ?, ?)", user.Name, user.Email, user.AccountId)
+	result, err := tx.ExecContext(context.Background(), "insert into sns_user(name, email, user_tag, platform) values(?, ?, ?, ?)", user.Name, user.Email, user.UserTag, user.Platform)
 	if err != nil {
 		return nil, e.Wrap(err)
 	}
@@ -62,15 +62,15 @@ func (a *repository) Save(user *entities.User) (*entities.User, error) {
 		return nil, e.Wrap(err)
 	}
 
-	rows, err = tx.QueryContext(context.Background(), "select id, name, email, created_at, account_id from sns_user where id = ?", id)
+	rows, err = tx.QueryContext(context.Background(), "select id, name, email, created_at, user_tag, platform from sns_user where id = ?", id)
 	if err != nil {
 		return nil, e.Wrap(err)
 	}
 	defer rows.Close()
 
-	selectedUser := &entities.User{}
+	newUser := &entities.User{}
 	if rows.Next() {
-		if err := rows.Scan(&selectedUser.Id, &selectedUser.Name, &selectedUser.Email, &selectedUser.CreatedAt, &selectedUser.AccountId); err != nil {
+		if err := rows.Scan(&newUser.Id, &newUser.Name, &newUser.Email, &newUser.CreatedAt, &newUser.UserTag, &newUser.Platform); err != nil {
 			return nil, e.Wrap(err)
 		}
 	}
@@ -82,7 +82,7 @@ func (a *repository) Save(user *entities.User) (*entities.User, error) {
 		return nil, e.Wrap(err)
 	}
 
-	return selectedUser, nil
+	return newUser, nil
 }
 
 // func (a *authRepository) UpdateName(name string) (*entities.User, error) {
