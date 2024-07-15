@@ -13,7 +13,6 @@ type Util interface {
 	Set(context.Context, string, interface{}, time.Duration) *redis.StatusCmd
 	Get(context.Context, string) *redis.StringCmd
 	Del(context.Context, ...string) *redis.IntCmd
-	SetNX(context.Context, string, interface{}, time.Duration) *redis.BoolCmd
 }
 
 var once sync.Once
