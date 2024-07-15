@@ -1,14 +1,15 @@
 package handlers
 
 import (
+	"context"
+	"encoding/json"
 	"net/http/httptest"
-	"os"
 	"testing"
 
-	jwtware "github.com/gofiber/contrib/jwt"
 	"github.com/gofiber/fiber/v2"
-	"github.com/golang-jwt/jwt/v5"
+	"github.com/haesuo566/sns_backend/api_gateway/pkg/entities"
 	jwtUtil "github.com/haesuo566/sns_backend/api_gateway/pkg/utils/jwt"
+	"github.com/haesuo566/sns_backend/api_gateway/pkg/utils/redis"
 	"github.com/joho/godotenv"
 )
 
@@ -19,22 +20,30 @@ func TestRefreshToken(t *testing.T) {
 		t.Error(err)
 	}
 
-	app.Use(jwtware.New(jwtware.Config{
-		SigningKey: jwtware.SigningKey{
-			Key:    []byte(os.Getenv("JWT_SECRET")),
-			JWTAlg: jwtware.HS256,
-		},
-	}))
+	redisUtil := redis.New()
 
 	// Protected route
-	app.Get("/test", func(c *fiber.Ctx) error {
-		user := c.Locals("user").(*jwt.Token)
-		claim := user.Claims.(jwt.MapClaims)
-		t.Log(claim)
+	app.Get("/test", jwtUtil.GetJwtConfig(redisUtil), func(c *fiber.Ctx) error {
+		user := c.Locals("user").(*jwtUtil.Token)
+		t.Log(user)
 		return nil
 	})
 
-	token, _ := jwtUtil.New().GenerateToken("access_token")
+	mockUser := &entities.User{
+		Id:      1,
+		Name:    "test",
+		UserTag: "asdsasadsad",
+	}
+	data, err := json.Marshal(mockUser)
+	if err != nil {
+		t.Error(err)
+	}
+
+	token, _ := jwtUtil.New().GenerateAccessToken()
+	if err := redisUtil.Set(context.Background(), token, string(data), 0).Err(); err != nil {
+		t.Error(err)
+	}
+
 	req := httptest.NewRequest("GET", "/test", nil)
 	req.Header.Add("Authorization", "Bearer "+token)
 
