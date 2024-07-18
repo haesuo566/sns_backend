@@ -1,8 +1,6 @@
 package jwt
 
 import (
-	"context"
-	"encoding/json"
 	"os"
 	"sync"
 	"time"
@@ -10,14 +8,13 @@ import (
 	jwtware "github.com/gofiber/contrib/jwt"
 	"github.com/gofiber/fiber/v2"
 	"github.com/golang-jwt/jwt/v5"
-	"github.com/haesuo566/sns_backend/api_gateway/pkg/entities"
 	e "github.com/haesuo566/sns_backend/api_gateway/pkg/utils/erorr"
 	"github.com/haesuo566/sns_backend/api_gateway/pkg/utils/redis"
 )
 
 type Util interface {
-	GenerateJwtToken() (*AllToken, error)
-	GenerateAccessToken() (string, error)
+	GenerateRefreshToken(string, string) (string, error)
+	GenerateAccessToken(string, string) (string, error)
 }
 
 type util struct {
@@ -41,36 +38,30 @@ func New() Util {
 	return instance
 }
 
-func (u *util) GenerateJwtToken() (*AllToken, error) {
-	AccessToken, err := u.GenerateAccessToken()
-	if err != nil {
-		return nil, e.Wrap(err)
-	}
-
+func (u *util) GenerateRefreshToken(id, userId string) (string, error) {
 	claims := jwt.MapClaims{
-		"iss": "haesuo",
-		"sub": "refresh_token",
-		"iat": time.Now().Unix(),
-		"exp": time.Now().Add(time.Hour * 24 * 7).Unix(),
+		"id":      id,
+		"sub":     "refresh_token",
+		"iat":     time.Now().Unix(),
+		"exp":     time.Now().Add(time.Hour * 24 * 7).Unix(),
+		"user_id": userId,
 	}
 
-	RefreshToken, err := signingToken(claims)
+	refreshToken, err := signingToken(claims)
 	if err != nil {
-		return nil, e.Wrap(err)
+		return "", e.Wrap(err)
 	}
 
-	return &AllToken{
-		AccessToken,
-		RefreshToken,
-	}, nil
+	return refreshToken, nil
 }
 
-func (u *util) GenerateAccessToken() (string, error) {
+func (u *util) GenerateAccessToken(id, userId string) (string, error) {
 	claims := jwt.MapClaims{
-		"iss": "haesuo",
-		"sub": "access_token",
-		"iat": time.Now().Unix(),
-		"exp": time.Now().Add(time.Minute * 30).Unix(),
+		"id":      id,
+		"sub":     "access_token",
+		"iat":     time.Now().Unix(),
+		"exp":     time.Now().Add(time.Minute * 30).Unix(),
+		"user_id": userId,
 	}
 
 	token, err := signingToken(claims)
@@ -93,19 +84,21 @@ func GetJwtConfig(redisUtil redis.Util) fiber.Handler {
 			Key:    []byte(os.Getenv("JWT_SECRET")),
 		},
 		SuccessHandler: func(c *fiber.Ctx) error {
-			token := c.Locals("user").(*jwt.Token).Raw
-			data, err := redisUtil.Get(context.Background(), token).Result()
-			if err != nil {
-				return e.Wrap(err)
-			}
+			token := c.Locals("user").(*jwt.Token)
+			claims := token.Claims.(jwt.MapClaims)
+			id := claims["id"].(string)
+			userId := claims["user_id"].(string)
 
-			user := &entities.User{}
-			if err := json.Unmarshal([]byte(data), user); err != nil {
-				return e.Wrap(err)
-			}
-
-			c.Locals("sns_user", user)
+			c.Locals("id", id)
+			c.Locals("user_id", userId)
 			return c.Next()
 		},
+		// accessToken validation 실패했을떄 401 unauthorized 주는 로직 구현해야 함
+		ErrorHandler: func(c *fiber.Ctx, err error) error {
+			return c.Next()
+		},
+		// Filter: func(c *fiber.Ctx) bool {
+		// 	return false
+		// },
 	})
 }
