@@ -89,19 +89,30 @@ func (s *service) SaveUser(user *entities.User) (*jwt.AllToken, error) {
 		return nil, e.Wrap(err)
 	}
 
-	jwtToken, err := s.jwtUtil.GenerateJwtToken()
+	accessId := strings.ReplaceAll(uuid.NewString(), "-", "")
+	accessToken, err := s.jwtUtil.GenerateAccessToken(accessId, user.Email)
 	if err != nil {
 		return nil, e.Wrap(err)
 	}
 
-	u, err := json.Marshal(user)
+	refreshId := strings.ReplaceAll(uuid.NewString(), "-", "")
+	refreshToken, err := s.jwtUtil.GenerateRefreshToken(refreshId, user.Email)
 	if err != nil {
 		return nil, e.Wrap(err)
 	}
 
-	if err := s.redisUtil.Set(context.Background(), jwtToken.AccessToken, u, time.Minute*30).Err(); err != nil {
+	// 로그아웃 확인을 위해 accessToken을 redis에 저장
+	if err := s.redisUtil.Set(context.Background(), accessId, user.Email, time.Minute*30).Err(); err != nil {
 		return nil, e.Wrap(err)
 	}
 
-	return jwtToken, nil
+	// Refresh Token을 도난 당했을때를 대비해 refresh토큰을 rotation해서 저장한 값과 비교함
+	if err := s.redisUtil.Set(context.Background(), refreshId, user.Email, time.Hour*24*7).Err(); err != nil {
+		return nil, e.Wrap(err)
+	}
+
+	return &jwt.AllToken{
+		AccessToken:  accessToken,
+		RefreshToken: refreshToken,
+	}, nil
 }
