@@ -1,14 +1,12 @@
 package handlers
 
 import (
-	"context"
-	"encoding/json"
+	"io"
 	"net/http/httptest"
 	"testing"
 
 	"github.com/gofiber/fiber/v2"
-	"github.com/haesuo566/sns_backend/api_gateway/pkg/entities"
-	jwtUtil "github.com/haesuo566/sns_backend/api_gateway/pkg/utils/jwt"
+	"github.com/haesuo566/sns_backend/api_gateway/pkg/utils/jwt"
 	"github.com/haesuo566/sns_backend/api_gateway/pkg/utils/redis"
 	"github.com/joho/godotenv"
 )
@@ -21,31 +19,13 @@ func TestRefreshToken(t *testing.T) {
 	}
 
 	redisUtil := redis.New()
+	jwtUtil := jwt.New()
+	handler := NewCommonHandler(jwtUtil, redisUtil)
 
-	// Protected route
-	app.Get("/test", jwtUtil.GetJwtConfig(redisUtil), func(c *fiber.Ctx) error {
-		user := c.Locals("user").(*jwtUtil.Token)
-		t.Log(user)
-		return nil
-	})
-
-	mockUser := &entities.User{
-		Id:      1,
-		Name:    "test",
-		UserTag: "asdsasadsad",
-	}
-	data, err := json.Marshal(mockUser)
-	if err != nil {
-		t.Error(err)
-	}
-
-	token, _ := jwtUtil.New().GenerateAccessToken()
-	if err := redisUtil.Set(context.Background(), token, string(data), 0).Err(); err != nil {
-		t.Error(err)
-	}
+	app.Get("/test", jwt.GetJwtConfig(redisUtil), handler.RefreshToken)
 
 	req := httptest.NewRequest("GET", "/test", nil)
-	req.Header.Add("Authorization", "Bearer "+token)
+	req.Header.Add("Authorization", "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE3MjE5MTQ3MjEsImlhdCI6MTcyMTMwOTkyMSwiaWQiOiIyYjZiYmRjNzg3ZDE0NmJhYmEzYmVkODUyNGJmZjY1MyIsInN1YiI6InJlZnJlc2hfdG9rZW4iLCJ1c2VyX2lkIjoiNDA1MDc2OWE1ZmE0ZmY0MTliMGVlYjE4OGQ4YzhhM2U4ODlkMDAzNjE4MTViMmNkNmJkZjhhNzQyN2EzZjA2OCJ9.NwWZJAoXXPMhak-kQGe8PfN9Hc2crkVMZIqz795Knuw")
 
 	resp, err := app.Test(req)
 	if err != nil {
@@ -58,4 +38,11 @@ func TestRefreshToken(t *testing.T) {
 	if resp.StatusCode != fiber.StatusOK {
 		t.Errorf("Expected status code %d, got %d", fiber.StatusOK, resp.StatusCode)
 	}
+
+	data, err := io.ReadAll(resp.Body)
+	if err != nil {
+		t.Errorf(err.Error())
+	}
+
+	t.Log(string(data))
 }
