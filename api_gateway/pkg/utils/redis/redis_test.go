@@ -33,3 +33,18 @@ func TestGet(t *testing.T) {
 
 	t.Log(result.Val())
 }
+
+func TestDel(t *testing.T) {
+	if err := godotenv.Load("../../../.env"); err != nil {
+		t.Error(err)
+	}
+
+	r := New()
+
+	result, err := r.Del(context.Background(), "key").Result()
+	if err != nil {
+		t.Error(err)
+	}
+
+	t.Log(result)
+}
