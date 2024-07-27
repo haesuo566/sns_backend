@@ -7,7 +7,6 @@ import (
 	"net/http"
 	"strings"
 	"sync"
-	"time"
 
 	"github.com/google/uuid"
 	"github.com/haesuo566/sns_backend/api_gateway/pkg/domains/auth"
@@ -100,18 +99,18 @@ func (s *service) SaveUser(user *entities.User) (*jwt.AllToken, error) {
 	}
 
 	refreshId := strings.ReplaceAll(uuid.NewString(), "-", "")
-	refreshToken, err := s.jwtUtil.GenerateRefreshToken(refreshId, user.Email)
+	refreshToken, err := s.jwtUtil.GenerateRefreshToken(refreshId, user.Email, accessId)
 	if err != nil {
 		return nil, e.Wrap(err)
 	}
 
 	// 로그아웃 확인을 위해 accessToken을 redis에 저장
-	if err := s.redisUtil.Set(context.Background(), accessId, user.Email, time.Minute*30).Err(); err != nil {
+	if err := s.redisUtil.Set(context.Background(), accessId, user.Email, jwt.AccessTime).Err(); err != nil {
 		return nil, e.Wrap(err)
 	}
 
 	// Refresh Token을 도난 당했을때를 대비해 refresh토큰을 rotation해서 저장한 값과 비교함
-	if err := s.redisUtil.Set(context.Background(), refreshId, user.Email, time.Hour*24*7).Err(); err != nil {
+	if err := s.redisUtil.Set(context.Background(), refreshId, user.Email, jwt.RefreshTime).Err(); err != nil {
 		return nil, e.Wrap(err)
 	}
 
