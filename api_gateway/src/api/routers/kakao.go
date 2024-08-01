@@ -2,12 +2,12 @@ package routers
 
 import (
 	"github.com/gofiber/fiber/v2"
-	"github.com/haesuo566/sns_backend/api_gateway/api/handlers"
-	"github.com/haesuo566/sns_backend/api_gateway/pkg/domains/auth"
-	"github.com/haesuo566/sns_backend/api_gateway/pkg/domains/auth/kakao"
-	"github.com/haesuo566/sns_backend/api_gateway/pkg/utils/db"
-	"github.com/haesuo566/sns_backend/api_gateway/pkg/utils/jwt"
-	"github.com/haesuo566/sns_backend/api_gateway/pkg/utils/redis"
+	"github.com/haesuo566/sns_backend/api_gateway/src/api/handlers"
+	"github.com/haesuo566/sns_backend/api_gateway/src/pkg/domains/auth"
+	"github.com/haesuo566/sns_backend/api_gateway/src/pkg/domains/auth/kakao"
+	"github.com/haesuo566/sns_backend/api_gateway/src/pkg/utils/db"
+	"github.com/haesuo566/sns_backend/api_gateway/src/pkg/utils/jwt"
+	"github.com/haesuo566/sns_backend/api_gateway/src/pkg/utils/redis"
 )
 
 func KakaoRouter(router fiber.Router) {

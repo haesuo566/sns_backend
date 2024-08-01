@@ -5,9 +5,9 @@ import (
 	"sync"
 
 	"github.com/gofiber/fiber/v2"
-	"github.com/haesuo566/sns_backend/api_gateway/pkg/domains/auth/common"
-	e "github.com/haesuo566/sns_backend/api_gateway/pkg/utils/erorr"
-	"github.com/haesuo566/sns_backend/api_gateway/pkg/utils/redis"
+	"github.com/haesuo566/sns_backend/api_gateway/src/pkg/domains/auth/common"
+	e "github.com/haesuo566/sns_backend/api_gateway/src/pkg/utils/erorr"
+	"github.com/haesuo566/sns_backend/api_gateway/src/pkg/utils/redis"
 )
 
 type CommonHandler struct {

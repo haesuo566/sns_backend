@@ -6,9 +6,9 @@ import (
 	"sync"
 
 	"github.com/gofiber/fiber/v2"
-	"github.com/haesuo566/sns_backend/api_gateway/api/impls"
-	"github.com/haesuo566/sns_backend/api_gateway/pkg/domains/auth"
-	e "github.com/haesuo566/sns_backend/api_gateway/pkg/utils/erorr"
+	"github.com/haesuo566/sns_backend/api_gateway/src/api/impls"
+	"github.com/haesuo566/sns_backend/api_gateway/src/pkg/domains/auth"
+	e "github.com/haesuo566/sns_backend/api_gateway/src/pkg/utils/erorr"
 	"golang.org/x/oauth2"
 )
 

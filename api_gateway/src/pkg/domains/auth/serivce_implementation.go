@@ -1,8 +1,8 @@
 package auth
 
 import (
-	"github.com/haesuo566/sns_backend/api_gateway/pkg/entities"
-	"github.com/haesuo566/sns_backend/api_gateway/pkg/utils/jwt"
+	"github.com/haesuo566/sns_backend/api_gateway/src/pkg/entities"
+	"github.com/haesuo566/sns_backend/api_gateway/src/pkg/utils/jwt"
 	"golang.org/x/oauth2"
 )
 

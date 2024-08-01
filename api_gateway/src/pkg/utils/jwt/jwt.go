@@ -10,8 +10,8 @@ import (
 	jwtware "github.com/gofiber/contrib/jwt"
 	"github.com/gofiber/fiber/v2"
 	"github.com/golang-jwt/jwt/v5"
-	e "github.com/haesuo566/sns_backend/api_gateway/pkg/utils/erorr"
-	"github.com/haesuo566/sns_backend/api_gateway/pkg/utils/redis"
+	e "github.com/haesuo566/sns_backend/api_gateway/src/pkg/utils/erorr"
+	"github.com/haesuo566/sns_backend/api_gateway/src/pkg/utils/redis"
 )
 
 type Util = *util

@@ -4,9 +4,9 @@ import (
 	"context"
 	"sync"
 
-	"github.com/haesuo566/sns_backend/api_gateway/pkg/entities"
-	"github.com/haesuo566/sns_backend/api_gateway/pkg/utils/db"
-	e "github.com/haesuo566/sns_backend/api_gateway/pkg/utils/erorr"
+	"github.com/haesuo566/sns_backend/api_gateway/src/pkg/entities"
+	"github.com/haesuo566/sns_backend/api_gateway/src/pkg/utils/db"
+	e "github.com/haesuo566/sns_backend/api_gateway/src/pkg/utils/erorr"
 )
 
 type Repository interface {

@@ -12,11 +12,11 @@ import (
 	"sync"
 
 	"github.com/google/uuid"
-	"github.com/haesuo566/sns_backend/api_gateway/pkg/domains/auth"
-	"github.com/haesuo566/sns_backend/api_gateway/pkg/entities"
-	e "github.com/haesuo566/sns_backend/api_gateway/pkg/utils/erorr"
-	"github.com/haesuo566/sns_backend/api_gateway/pkg/utils/jwt"
-	"github.com/haesuo566/sns_backend/api_gateway/pkg/utils/redis"
+	"github.com/haesuo566/sns_backend/api_gateway/src/pkg/domains/auth"
+	"github.com/haesuo566/sns_backend/api_gateway/src/pkg/entities"
+	e "github.com/haesuo566/sns_backend/api_gateway/src/pkg/utils/erorr"
+	"github.com/haesuo566/sns_backend/api_gateway/src/pkg/utils/jwt"
+	"github.com/haesuo566/sns_backend/api_gateway/src/pkg/utils/redis"
 	"golang.org/x/oauth2"
 )
 

@@ -6,9 +6,9 @@ import (
 	"testing"
 
 	"github.com/gofiber/fiber/v2"
-	"github.com/haesuo566/sns_backend/api_gateway/pkg/domains/auth/common"
-	"github.com/haesuo566/sns_backend/api_gateway/pkg/utils/jwt"
-	"github.com/haesuo566/sns_backend/api_gateway/pkg/utils/redis"
+	"github.com/haesuo566/sns_backend/api_gateway/src/pkg/domains/auth/common"
+	"github.com/haesuo566/sns_backend/api_gateway/src/pkg/utils/jwt"
+	"github.com/haesuo566/sns_backend/api_gateway/src/pkg/utils/redis"
 	"github.com/joho/godotenv"
 )
 
@@ -64,7 +64,7 @@ func TestLogout(t *testing.T) {
 	app.Get("/logout", jwt.GetJwtConfig(redisUtil), handler.Logout)
 
 	req := httptest.NewRequest("GET", "/logout", nil)
-	req.Header.Add("Authorization", "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJhY2Nlc3NfaWQiOiJiZDgzM2RhNzY2N2I0NDhkYmI5Yzc3NmMxNDQ1MGY0MCIsImVtYWlsX2hhc2giOiI0MDUwNzY5YTVmYTRmZjQxOWIwZWViMTg4ZDhjOGEzZTg4OWQwMDM2MTgxNWIyY2Q2YmRmOGE3NDI3YTNmMDY4IiwiZXhwIjoxNzIyNjkzMTI4LCJpYXQiOjE3MjIwODgzMjgsImlkIjoiNTg4OTgwODI2OTg4NGI0OGJhZDU5NWFjNmE3NGYxODIiLCJzdWIiOiJyZWZyZXNoX3Rva2VuIn0.1dRCMwHcYfZdfVqPhytYFXHJ5zADCmbhZWghl9C8LTE")
+	req.Header.Add("Authorization", "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJhY2Nlc3NfaWQiOiIzNDMyZTQ3MjExYzc0NTVmYWY0NDAwYmRlZjIwNDU2MCIsImVtYWlsX2hhc2giOiI0MDUwNzY5YTVmYTRmZjQxOWIwZWViMTg4ZDhjOGEzZTg4OWQwMDM2MTgxNWIyY2Q2YmRmOGE3NDI3YTNmMDY4IiwiZXhwIjoxNzIyNjk0MTMxLCJpYXQiOjE3MjIwODkzMzEsImlkIjoiZjUzZTBkNGY4ZDY1NDM4M2I0YmNkMDM2NTg1ZjQyNzUiLCJzdWIiOiJyZWZyZXNoX3Rva2VuIn0.hlre5XmwARJh3Urj02l-F_wSwvC7k690RXHG7G4TTZk")
 
 	resp, err := app.Test(req)
 	if err != nil {

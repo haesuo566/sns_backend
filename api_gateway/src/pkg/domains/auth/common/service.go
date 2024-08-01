@@ -8,9 +8,9 @@ import (
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/google/uuid"
-	e "github.com/haesuo566/sns_backend/api_gateway/pkg/utils/erorr"
-	"github.com/haesuo566/sns_backend/api_gateway/pkg/utils/jwt"
-	"github.com/haesuo566/sns_backend/api_gateway/pkg/utils/redis"
+	e "github.com/haesuo566/sns_backend/api_gateway/src/pkg/utils/erorr"
+	"github.com/haesuo566/sns_backend/api_gateway/src/pkg/utils/jwt"
+	"github.com/haesuo566/sns_backend/api_gateway/src/pkg/utils/redis"
 )
 
 type Service struct {
