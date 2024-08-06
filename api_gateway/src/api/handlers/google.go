@@ -7,13 +7,13 @@ import (
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/haesuo566/sns_backend/api_gateway/src/api/impls"
-	"github.com/haesuo566/sns_backend/api_gateway/src/pkg/domains/auth"
+	"github.com/haesuo566/sns_backend/api_gateway/src/pkg/domains/user"
 	e "github.com/haesuo566/sns_backend/api_gateway/src/pkg/utils/erorr"
 	"golang.org/x/oauth2"
 )
 
 type googleHandler struct {
-	googleService auth.Service
+	googleService *user.Service
 }
 
 var googleConfig oauth2.Config
@@ -21,7 +21,7 @@ var googleConfig oauth2.Config
 var googleOnce sync.Once
 var googleInstance impls.AuthHandler
 
-func NewGoogleHandler(googleServive auth.Service) impls.AuthHandler {
+func NewGoogleHandler(googleServive *user.Service) impls.AuthHandler {
 	googleOnce.Do(func() {
 		googleConfig = oauth2.Config{
 			ClientID:     os.Getenv("GOOGLE_ID"),

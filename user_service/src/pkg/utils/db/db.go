@@ -24,11 +24,20 @@ func NewDatabase() Database {
 	once.Do(func() {
 		url := os.Getenv("DATABASE_URL")
 
-		var err error
-		instance, err = sql.Open("mysql", url)
+		db, err := sql.Open("mysql", url)
 		if err != nil {
 			panic(err)
 		}
+
+		// db.SetConnMaxIdleTime()
+		// db.SetMaxIdleConns()
+		// db.SetMaxOpenConns()
+
+		if err := db.Ping(); err != nil {
+			panic(err)
+		}
+
+		instance = db
 	})
 	return instance
 }

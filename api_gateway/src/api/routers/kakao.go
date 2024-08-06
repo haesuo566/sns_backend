@@ -3,23 +3,20 @@ package routers
 import (
 	"github.com/gofiber/fiber/v2"
 	"github.com/haesuo566/sns_backend/api_gateway/src/api/handlers"
-	"github.com/haesuo566/sns_backend/api_gateway/src/pkg/domains/auth"
-	"github.com/haesuo566/sns_backend/api_gateway/src/pkg/domains/auth/kakao"
-	"github.com/haesuo566/sns_backend/api_gateway/src/pkg/utils/db"
+	"github.com/haesuo566/sns_backend/api_gateway/src/pkg/domains/user"
+	"github.com/haesuo566/sns_backend/api_gateway/src/pkg/domains/user/kakao"
+	"github.com/haesuo566/sns_backend/api_gateway/src/pkg/kafka/producer"
 	"github.com/haesuo566/sns_backend/api_gateway/src/pkg/utils/jwt"
-	"github.com/haesuo566/sns_backend/api_gateway/src/pkg/utils/redis"
 )
 
 func KakaoRouter(router fiber.Router) {
-	sql := db.NewDatabase()
-	authRepository := auth.NewRepository(sql)
-
 	jwtUtil := jwt.New()
-	redisUtil := redis.New()
+	kakaoService := kakao.NewService()
+	producer := producer.New()
 
-	kakaoService := kakao.NewService(authRepository, jwtUtil, redisUtil)
+	userService := user.NewService(kakaoService, jwtUtil, producer)
 
-	handler := handlers.NewKakaoHandler(kakaoService)
+	handler := handlers.NewKakaoHandler(userService)
 
 	router.Get("/kakao/login", handler.Login)
 	router.Get("/kakao/callback", handler.Callback)

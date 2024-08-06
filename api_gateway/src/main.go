@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"io"
+	"log"
 	"os"
 	"strconv"
 	"time"
@@ -13,8 +14,7 @@ import (
 	"github.com/joho/godotenv"
 )
 
-// 유저 db에 저장하는거 user service로 옮기는게 나을것 같음
-// 그래야 api_gateway의 복잡성이 낮아짐
+// logging하는건 좀 중요하게 수정해야할 듯 -> 나중에 elk stack에 붙이려면 어떻게든 해야함
 func main() {
 	app := fiber.New()
 
@@ -34,8 +34,10 @@ func main() {
 	defer file.Close()
 
 	multiWriter := io.MultiWriter(os.Stdout, file)
+	log.SetOutput(multiWriter)
 
 	// middlewares
+	// log format 추가해야 함
 	app.Use(logger.New(logger.Config{
 		Output: multiWriter,
 	}))

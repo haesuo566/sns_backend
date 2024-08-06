@@ -1,0 +1,2 @@
+22:50:06 | 307 |     241.442µs | 127.0.0.1 | GET | /oauth2/google/login | -
+22:50:14 | 200 |  1.031048487s | 127.0.0.1 | GET | /oauth2/google/callback | -

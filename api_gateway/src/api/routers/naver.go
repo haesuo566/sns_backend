@@ -3,23 +3,20 @@ package routers
 import (
 	"github.com/gofiber/fiber/v2"
 	"github.com/haesuo566/sns_backend/api_gateway/src/api/handlers"
-	"github.com/haesuo566/sns_backend/api_gateway/src/pkg/domains/auth"
-	"github.com/haesuo566/sns_backend/api_gateway/src/pkg/domains/auth/naver"
-	"github.com/haesuo566/sns_backend/api_gateway/src/pkg/utils/db"
+	"github.com/haesuo566/sns_backend/api_gateway/src/pkg/domains/user"
+	"github.com/haesuo566/sns_backend/api_gateway/src/pkg/domains/user/naver"
+	"github.com/haesuo566/sns_backend/api_gateway/src/pkg/kafka/producer"
 	"github.com/haesuo566/sns_backend/api_gateway/src/pkg/utils/jwt"
-	"github.com/haesuo566/sns_backend/api_gateway/src/pkg/utils/redis"
 )
 
 func NaverRouter(router fiber.Router) {
-	sql := db.NewDatabase()
-	authRepository := auth.NewRepository(sql)
-
 	jwtUtil := jwt.New()
-	redisUtil := redis.New()
+	naverService := naver.NewService()
+	producer := producer.New()
 
-	googleService := naver.NewService(authRepository, jwtUtil, redisUtil)
+	userService := user.NewService(naverService, jwtUtil, producer)
 
-	handler := handlers.NewNaverHandler(googleService)
+	handler := handlers.NewNaverHandler(userService)
 
 	router.Get("/naver/login", handler.Login)
 	router.Get("/naver/callback", handler.Callback)

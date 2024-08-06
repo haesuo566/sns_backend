@@ -7,13 +7,13 @@ import (
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/haesuo566/sns_backend/api_gateway/src/api/impls"
-	"github.com/haesuo566/sns_backend/api_gateway/src/pkg/domains/auth"
+	"github.com/haesuo566/sns_backend/api_gateway/src/pkg/domains/user"
 	e "github.com/haesuo566/sns_backend/api_gateway/src/pkg/utils/erorr"
 	"golang.org/x/oauth2"
 )
 
 type naverHandler struct {
-	naverSerivce auth.Service
+	naverSerivce *user.Service
 }
 
 var naverConfig oauth2.Config
@@ -21,7 +21,7 @@ var naverConfig oauth2.Config
 var naverOnce sync.Once
 var naverInstance impls.AuthHandler
 
-func NewNaverHandler(naverSerivce auth.Service) impls.AuthHandler {
+func NewNaverHandler(naverSerivce *user.Service) impls.AuthHandler {
 	naverOnce.Do(func() {
 		naverConfig = oauth2.Config{
 			ClientID:     os.Getenv("NAVER_ID"),

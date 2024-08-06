@@ -1,0 +1,4 @@
+22:46:11 | 307 |     143.594µs | 127.0.0.1 | GET | /oauth2/naver/login | -
+22:46:23 | 200 |  1.780654627s | 127.0.0.1 | GET | /oauth2/naver/callback | -
+22:50:29 | 307 |     140.231µs | 127.0.0.1 | GET | /oauth2/naver/login | -
+22:50:30 | 200 |  1.589966633s | 127.0.0.1 | GET | /oauth2/naver/callback | -

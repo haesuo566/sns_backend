@@ -1,0 +1,8 @@
+21:34:58 | 307 |     138.803µs | 127.0.0.1 | GET | /oauth2/naver/login | -
+21:35:24 | 200 |  1.352366242s | 127.0.0.1 | GET | /oauth2/naver/callback | -
+asdasdads22:26:49 | 307 |     198.132µs | 127.0.0.1 | GET | /oauth2/google/login | -
+22:28:26 | 307 |     159.639µs | 127.0.0.1 | GET | /oauth2/naver/login | -
+22:29:59 | 307 |      182.89µs | 127.0.0.1 | GET | /oauth2/naver/login | -
+22:31:12 | 307 |     247.615µs | 127.0.0.1 | GET | /oauth2/naver/login | -
+22:37:11 | 307 |     204.336µs | 127.0.0.1 | GET | /oauth2/google/login | -
+22:37:20 | 200 |  1.008033114s | 127.0.0.1 | GET | /oauth2/google/callback | -

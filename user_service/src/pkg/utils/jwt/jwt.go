@@ -6,7 +6,7 @@ import (
 	"sync"
 
 	"github.com/golang-jwt/jwt/v5"
-	e "github.com/haesuo566/sns_backend/user_service/pkg/utils/erorr"
+	e "github.com/haesuo566/sns_backend/user_service/src/pkg/utils/erorr"
 )
 
 type Util struct {

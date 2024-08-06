@@ -1,38 +1,32 @@
-package auth
+package gateway
 
 import (
 	"context"
 	"sync"
 
-	"github.com/haesuo566/sns_backend/api_gateway/src/pkg/entities"
-	"github.com/haesuo566/sns_backend/api_gateway/src/pkg/utils/db"
-	e "github.com/haesuo566/sns_backend/api_gateway/src/pkg/utils/erorr"
+	"github.com/haesuo566/sns_backend/user_service/src/pkg/entities"
+	"github.com/haesuo566/sns_backend/user_service/src/pkg/utils/db"
+	e "github.com/haesuo566/sns_backend/user_service/src/pkg/utils/erorr"
 )
 
-type Repository interface {
-	Save(*entities.User) (*entities.User, error)
-	// UpdateName(string) (*entities.User, error)
-}
-
-type repository struct {
+type Repository struct {
 	db db.Database
 }
 
-var repositoryOnce sync.Once
-var repositoryInstance Repository = nil
+var repositorySyncInit sync.Once
+var repositoryInstance *Repository
 
-func NewRepository(db db.Database) Repository {
-	repositoryOnce.Do(func() {
-		repositoryInstance = &repository{
+func NewRepository(db db.Database) *Repository {
+	repositorySyncInit.Do(func() {
+		repositoryInstance = &Repository{
 			db,
 		}
 	})
-
 	return repositoryInstance
 }
 
-func (a *repository) Save(user *entities.User) (*entities.User, error) {
-	tx, err := a.db.Begin()
+func (r *Repository) Save(user *entities.User) (*entities.User, error) {
+	tx, err := r.db.Begin()
 	if err != nil {
 		return nil, e.Wrap(err)
 	}
