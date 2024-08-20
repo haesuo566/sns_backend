@@ -1,24 +1,18 @@
 package redis
 
 import (
-	"context"
 	"os"
 	"sync"
-	"time"
 
 	"github.com/redis/go-redis/v9"
 )
 
-type Util interface {
-	Set(context.Context, string, interface{}, time.Duration) *redis.StatusCmd
-	Get(context.Context, string) *redis.StringCmd
-	Del(context.Context, ...string) *redis.IntCmd
-}
+type Client = redis.Client
 
 var once sync.Once
-var instance Util
+var instance *redis.Client
 
-func New() Util {
+func New() *redis.Client {
 	once.Do(func() {
 		instance = redis.NewClient(&redis.Options{
 			Addr:     os.Getenv("REDIS_URL"),

@@ -6,6 +6,10 @@ import (
 
 	"github.com/confluentinc/confluent-kafka-go/v2/kafka"
 	"github.com/haesuo566/sns_backend/user_service/src/events/impls"
+	"github.com/haesuo566/sns_backend/user_service/src/events/topics"
+	"github.com/haesuo566/sns_backend/user_service/src/pkg/kafka/consumer"
+	"github.com/haesuo566/sns_backend/user_service/src/pkg/kafka/producer"
+	"github.com/haesuo566/sns_backend/user_service/src/pkg/utils/worker"
 )
 
 type Event struct {
@@ -14,19 +18,15 @@ type Event struct {
 	gatewayTopic impls.Topic
 }
 
-const (
-	gateway string = "gateway"
-)
-
 var once sync.Once
 var instance *Event
 
-func New(consumer *kafka.Consumer, producer *kafka.Producer, gatewayTopic impls.Topic) *Event {
+func New() *Event {
 	once.Do(func() {
 		instance = &Event{
-			consumer,
-			producer,
-			gatewayTopic,
+			consumer:     consumer.New(),
+			producer:     producer.New(),
+			gatewayTopic: topics.NewGateWayTopic(),
 		}
 	})
 	return instance
@@ -60,12 +60,22 @@ func (e *Event) Execute() error {
 			}
 		}
 
-		// 만약 response가 필요없는 동작이면 그냥 goroutine으로 실행시켜도 될 듯
+		// work job
+		w := worker.Job{
+			CorrelationId: correlationId,
+			Key:           key,
+			Value:         value,
+		}
+
 		switch topic {
-		case gateway: // gateway service
-			e.gatewayTopic.ExecuteEvent(correlationId, key, value)
+		case "gateway": // gateway service
+			w.Task = e.gatewayTopic.ExecuteEvent
+		case "":
 		default:
 			// log + error handling
+			// continue
 		}
+
+		worker.AddJob(w)
 	}
 }

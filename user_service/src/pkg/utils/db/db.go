@@ -6,7 +6,7 @@ import (
 	"os"
 	"sync"
 
-	_ "github.com/go-sql-driver/mysql"
+	_ "github.com/lib/pq"
 )
 
 type Database interface {
@@ -24,7 +24,7 @@ func NewDatabase() Database {
 	once.Do(func() {
 		url := os.Getenv("DATABASE_URL")
 
-		db, err := sql.Open("mysql", url)
+		db, err := sql.Open("postgres", url)
 		if err != nil {
 			panic(err)
 		}
