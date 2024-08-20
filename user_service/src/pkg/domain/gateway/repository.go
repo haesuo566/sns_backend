@@ -2,81 +2,87 @@ package gateway
 
 import (
 	"context"
+	"encoding/json"
+	"fmt"
 	"sync"
 
 	"github.com/haesuo566/sns_backend/user_service/src/pkg/entities"
 	"github.com/haesuo566/sns_backend/user_service/src/pkg/utils/db"
 	e "github.com/haesuo566/sns_backend/user_service/src/pkg/utils/erorr"
+	"github.com/haesuo566/sns_backend/user_service/src/pkg/utils/redis"
 )
 
 type Repository struct {
-	db db.Database
+	db    db.Database
+	redis *redis.Client
 }
 
 var repositorySyncInit sync.Once
 var repositoryInstance *Repository
 
-func NewRepository(db db.Database) *Repository {
+func NewRepository() *Repository {
 	repositorySyncInit.Do(func() {
 		repositoryInstance = &Repository{
-			db,
+			db:    db.NewDatabase(),
+			redis: redis.New(),
 		}
 	})
 	return repositoryInstance
 }
 
-func (r *Repository) Save(user *entities.User) (*entities.User, error) {
+// go-cache vs redis -> msa니까 redis로 하긴하는데 성능 문제가 생시면 go-cache로 바꿔야할 듯
+// early return pattern을 panic하고 defer에서 recover하는 방법으로 좀 간결하게 짜기 가능해짐
+func (r *Repository) SaveUser(user *entities.User) (u *entities.User, er error) {
+	ctx := context.Background()
+
 	tx, err := r.db.Begin()
 	if err != nil {
 		return nil, e.Wrap(err)
 	}
+	// error가 있을 경우 query rollback
+	defer func() {
+		if er != nil {
+			tx.Rollback()
+		}
+	}()
 
-	rows, err := tx.QueryContext(context.Background(), "select id, name, email, created_at, user_tag, platform from sns_user where email = ?", user.Email)
-	if err != nil {
-		return nil, e.Wrap(err)
-	}
-	defer rows.Close()
-
-	if rows.Next() {
-		user := &entities.User{}
-		if err := rows.Scan(&user.Id, &user.Name, &user.Email, &user.CreatedAt, &user.UserTag, &user.Platform); err != nil {
+	// user caching
+	if val := r.redis.HGet(ctx, "User", user.Email).Val(); len(val) > 0 {
+		var cachedUser entities.User
+		if err := json.Unmarshal([]byte(val), &cachedUser); err != nil {
 			return nil, e.Wrap(err)
 		}
-
-		return user, nil
+		return &cachedUser, nil
 	}
 
-	result, err := tx.ExecContext(context.Background(), "insert into sns_user(name, email, user_tag, platform) values(?, ?, ?, ?)", user.Name, user.Email, user.UserTag, user.Platform)
-	if err != nil {
+	// timestamp, userTag 넣어줘야 할듯 여기서
+	var returningId int = 0
+	if err := tx.QueryRowContext(ctx, "INSERT INTO sns_user (name, email, user_tag, platform) VALUES ($1, $2, $3, $4) RETURNING id", user.Name, user.Email, user.UserTag, user.Platform).Scan(&returningId); err != nil {
 		return nil, e.Wrap(err)
 	}
 
-	id, err := result.LastInsertId()
-	if err != nil {
-		return nil, e.Wrap(err)
+	if returningId == 0 {
+		return nil, e.Wrap(fmt.Errorf("asdasdsasda"))
 	}
+	user.Id = returningId // User에 timestamp 넣어서 insert 해야함
 
-	rows, err = tx.QueryContext(context.Background(), "select id, name, email, created_at, user_tag, platform from sns_user where id = ?", id)
-	if err != nil {
+	if data, err := json.Marshal(user); err != nil {
 		return nil, e.Wrap(err)
-	}
-	defer rows.Close()
-
-	newUser := &entities.User{}
-	if rows.Next() {
-		if err := rows.Scan(&newUser.Id, &newUser.Name, &newUser.Email, &newUser.CreatedAt, &newUser.UserTag, &newUser.Platform); err != nil {
+	} else {
+		if err := r.redis.HSet(ctx, "User", user.Email, string(data)).Err(); err != nil {
 			return nil, e.Wrap(err)
 		}
 	}
 
 	if err := tx.Commit(); err != nil {
-		if err := tx.Rollback(); err != nil {
+		if err := r.redis.HDel(ctx, "User", user.Email).Err(); err != nil {
 			return nil, e.Wrap(err)
 		}
+
 		return nil, e.Wrap(err)
 	}
 
-	return newUser, nil
+	return user, nil
 }
 
 // func (a *authRepository) UpdateName(name string) (*entities.User, error) {
