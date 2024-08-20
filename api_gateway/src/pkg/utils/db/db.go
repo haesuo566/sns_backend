@@ -24,7 +24,7 @@ func NewDatabase() Database {
 	once.Do(func() {
 		url := os.Getenv("DATABASE_URL")
 
-		db, err := sql.Open("mysql", url)
+		db, err := sql.Open("postgres", url)
 		if err != nil {
 			panic(err)
 		}
