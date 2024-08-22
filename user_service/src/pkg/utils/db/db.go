@@ -1,43 +1,65 @@
 package db
 
 import (
-	"context"
 	"database/sql"
+	"fmt"
 	"os"
 	"sync"
 
+	"github.com/haesuo566/sns_backend/user_service/src/pkg/utils/errx"
 	_ "github.com/lib/pq"
 )
 
-type Database interface {
-	ExecContext(context.Context, string, ...interface{}) (sql.Result, error)
-	PrepareContext(context.Context, string) (*sql.Stmt, error)
-	QueryContext(context.Context, string, ...interface{}) (*sql.Rows, error)
-	QueryRowContext(context.Context, string, ...interface{}) *sql.Row
-	Begin() (*sql.Tx, error)
-}
-
 var once sync.Once
-var instance Database = nil
+var instance *sql.DB = nil
 
-func NewDatabase() Database {
+func New() *sql.DB {
 	once.Do(func() {
 		url := os.Getenv("DATABASE_URL")
 
-		db, err := sql.Open("postgres", url)
+		var err error
+		instance, err = sql.Open("postgres", url)
 		if err != nil {
 			panic(err)
 		}
 
-		// db.SetConnMaxIdleTime()
-		// db.SetMaxIdleConns()
-		// db.SetMaxOpenConns()
+		// instance.SetConnMaxIdleTime()
+		// instance.SetMaxIdleConns()
+		// instance.SetMaxOpenConns()
 
-		if err := db.Ping(); err != nil {
+		if err := instance.Ping(); err != nil {
 			panic(err)
 		}
-
-		instance = db
 	})
 	return instance
+}
+
+// Redis, Postgresql를 트랜잭션으로 사용함
+func StartTx(method func(tx *sql.Tx) (interface{}, error)) (i interface{}, e error) {
+	if instance == nil {
+		return nil, errx.Trace(fmt.Errorf(""))
+	}
+
+	tx, err := instance.Begin()
+	if err != nil {
+		return nil, errx.Trace(err)
+	}
+
+	defer func() {
+		if e != nil {
+			tx.Rollback()
+		}
+	}()
+
+	result, err := method(tx)
+	if err != nil {
+		return nil, errx.Trace(err)
+	}
+
+	// 에러가 날 일이 있나 싶긴하네
+	if err := tx.Commit(); err != nil {
+		return nil, errx.Trace(err)
+	}
+
+	return result, nil
 }
