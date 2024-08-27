@@ -1,4 +1,4 @@
-package user
+package auth
 
 import (
 	"encoding/json"
@@ -9,7 +9,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/haesuo566/sns_backend/api_gateway/src/pkg/dto"
 	"github.com/haesuo566/sns_backend/api_gateway/src/pkg/entities"
-	e "github.com/haesuo566/sns_backend/api_gateway/src/pkg/utils/erorr"
+	"github.com/haesuo566/sns_backend/api_gateway/src/pkg/utils/errx"
 	"github.com/haesuo566/sns_backend/api_gateway/src/pkg/utils/jwt"
 	"golang.org/x/oauth2"
 )
@@ -46,7 +46,7 @@ func NewService(service TemplateService, jwtUtil jwt.Util, producder *kafka.Prod
 func (t *Service) GetJwtToken(token *oauth2.Token) (*jwt.AllToken, error) {
 	user, err := t.TemplateService.GetOauthUser(token)
 	if err != nil {
-		return nil, e.Wrap(err)
+		return nil, errx.Trace(err)
 	}
 
 	return t.SaveUser(user)
@@ -57,13 +57,13 @@ func (t *Service) SaveUser(user *entities.User) (*jwt.AllToken, error) {
 	accessId := strings.ReplaceAll(uuid.NewString(), "-", "")
 	accessToken, err := t.jwtUtil.GenerateAccessToken(accessId, user.Email)
 	if err != nil {
-		return nil, e.Wrap(err)
+		return nil, errx.Trace(err)
 	}
 
 	refreshId := strings.ReplaceAll(uuid.NewString(), "-", "")
 	refreshToken, err := t.jwtUtil.GenerateRefreshToken(refreshId, user.Email, accessId)
 	if err != nil {
-		return nil, e.Wrap(err)
+		return nil, errx.Trace(err)
 	}
 
 	jwtTokenInfo := dto.JwtTokenInfo{
@@ -74,7 +74,7 @@ func (t *Service) SaveUser(user *entities.User) (*jwt.AllToken, error) {
 
 	data, err := json.Marshal(jwtTokenInfo)
 	if err != nil {
-		return nil, e.Wrap(err)
+		return nil, errx.Trace(err)
 	}
 
 	correlationId := strings.ReplaceAll(uuid.NewString(), "-", "")
@@ -94,7 +94,7 @@ func (t *Service) SaveUser(user *entities.User) (*jwt.AllToken, error) {
 	}, nil)
 
 	if err != nil {
-		return nil, e.Wrap(err)
+		return nil, errx.Trace(err)
 	}
 
 	return &jwt.AllToken{

@@ -45,6 +45,7 @@ func (e *Event) Execute() error {
 		value := msg.Value
 
 		var correlationId string // requestId
+		// var accessToken string
 
 		// 추후에 header나 metadata같은걸로 caching하면 괜찮을 듯 한데???
 		for i := 0; i < len(headers); i++ {
@@ -55,6 +56,8 @@ func (e *Event) Execute() error {
 			switch key {
 			case "CorrelationId":
 				correlationId = string(value)
+			case "AccessToken":
+				// accessToken = string(value)
 			default:
 				continue
 			}

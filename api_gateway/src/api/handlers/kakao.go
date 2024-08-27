@@ -7,13 +7,13 @@ import (
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/haesuo566/sns_backend/api_gateway/src/api/impls"
-	"github.com/haesuo566/sns_backend/api_gateway/src/pkg/domains/user"
-	e "github.com/haesuo566/sns_backend/api_gateway/src/pkg/utils/erorr"
+	"github.com/haesuo566/sns_backend/api_gateway/src/pkg/domains/auth"
+	"github.com/haesuo566/sns_backend/api_gateway/src/pkg/utils/errx"
 	"golang.org/x/oauth2"
 )
 
 type kakaoHandler struct {
-	kakaoService *user.Service
+	kakaoService *auth.Service
 }
 
 var kakaoConfig oauth2.Config
@@ -21,7 +21,7 @@ var kakaoConfig oauth2.Config
 var kakaoOnce sync.Once
 var kakaoInstance impls.AuthHandler
 
-func NewKakaoHandler(kakaoService *user.Service) impls.AuthHandler {
+func NewKakaoHandler(kakaoService *auth.Service) impls.AuthHandler {
 	kakaoOnce.Do(func() {
 		kakaoConfig = oauth2.Config{
 			ClientID:     os.Getenv("KAKAO_ID"),
@@ -56,12 +56,12 @@ func (n *kakaoHandler) Callback(ctx *fiber.Ctx) error {
 	code := ctx.FormValue("code")
 	token, err := kakaoConfig.Exchange(context.Background(), code)
 	if err != nil {
-		return e.Wrap(err)
+		return errx.Trace(err)
 	}
 
 	jwtToken, err := n.kakaoService.GetJwtToken(token)
 	if err != nil {
-		return e.Wrap(err)
+		return errx.Trace(err)
 	}
 
 	return ctx.JSON(jwtToken)

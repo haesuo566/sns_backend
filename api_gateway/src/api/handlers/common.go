@@ -5,24 +5,24 @@ import (
 	"sync"
 
 	"github.com/gofiber/fiber/v2"
-	"github.com/haesuo566/sns_backend/api_gateway/src/pkg/domains/user/common"
-	e "github.com/haesuo566/sns_backend/api_gateway/src/pkg/utils/erorr"
+	"github.com/haesuo566/sns_backend/api_gateway/src/pkg/domains/auth/common"
+	"github.com/haesuo566/sns_backend/api_gateway/src/pkg/utils/errx"
 	"github.com/haesuo566/sns_backend/api_gateway/src/pkg/utils/redis"
 )
 
 type CommonHandler struct {
 	commonService *common.Service
-	redisUtil     redis.Util
+	redis         redis.Util
 }
 
 var commonOnce sync.Once
 var commonInstance *CommonHandler
 
-func NewCommonHandler(commonService *common.Service, redisUtil redis.Util) *CommonHandler {
+func NewCommonHandler() *CommonHandler {
 	commonOnce.Do(func() {
 		commonInstance = &CommonHandler{
-			commonService,
-			redisUtil,
+			commonService: common.NewService(),
+			redis:         redis.New(),
 		}
 	})
 	return commonInstance
@@ -32,9 +32,9 @@ func (c *CommonHandler) RefreshToken(ctx *fiber.Ctx) error {
 	id := ctx.Locals("id").(string)
 	emailHash := ctx.Locals("email_hash").(string)
 
-	result, err := c.redisUtil.Del(context.Background(), id).Result()
+	result, err := c.redis.Del(context.Background(), id).Result()
 	if err != nil {
-		return e.Wrap(err)
+		return errx.Trace(err)
 	}
 
 	// refreshToken이 redis에 없는 경우 ->
@@ -46,7 +46,7 @@ func (c *CommonHandler) RefreshToken(ctx *fiber.Ctx) error {
 
 	tokenMap, err := c.commonService.RefreshToken(emailHash)
 	if err != nil {
-		return e.Wrap(err)
+		return errx.Trace(err)
 	}
 
 	return ctx.JSON(tokenMap)

@@ -6,7 +6,7 @@ import (
 	"sync"
 
 	"github.com/golang-jwt/jwt/v5"
-	e "github.com/haesuo566/sns_backend/user_service/src/pkg/utils/erorr"
+	"github.com/haesuo566/sns_backend/user_service/src/pkg/utils/errx"
 )
 
 type Util struct {
@@ -30,18 +30,18 @@ func New() *Util {
 func (j *Util) Validation(token string) (jwt.MapClaims, error) {
 	parsedToken, err := jwt.Parse(token, func(t *jwt.Token) (interface{}, error) {
 		if _, ok := t.Method.(*jwt.SigningMethodHMAC); !ok {
-			return nil, e.Wrap(errors.New(""))
+			return nil, errx.Trace(errors.New(""))
 		}
 		return []byte(os.Getenv("JWT_SECRET")), nil
 	})
 
 	if err != nil {
-		e.Wrap(err)
+		errx.Trace(err)
 	}
 
 	mapClaims, ok := parsedToken.Claims.(jwt.MapClaims)
 	if !ok {
-		return nil, e.Wrap(errors.New(""))
+		return nil, errx.Trace(errors.New(""))
 	}
 
 	return mapClaims, nil

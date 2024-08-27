@@ -10,7 +10,7 @@ import (
 	jwtware "github.com/gofiber/contrib/jwt"
 	"github.com/gofiber/fiber/v2"
 	"github.com/golang-jwt/jwt/v5"
-	e "github.com/haesuo566/sns_backend/api_gateway/src/pkg/utils/erorr"
+	"github.com/haesuo566/sns_backend/api_gateway/src/pkg/utils/errx"
 	"github.com/haesuo566/sns_backend/api_gateway/src/pkg/utils/redis"
 )
 
@@ -59,7 +59,7 @@ func (u *util) GenerateRefreshToken(id, emailHash, accessId string) (string, err
 
 	refreshToken, err := signingToken(claims)
 	if err != nil {
-		return "", e.Wrap(err)
+		return "", errx.Trace(err)
 	}
 
 	return refreshToken, nil
@@ -76,7 +76,7 @@ func (u *util) GenerateAccessToken(id, emailHash string) (string, error) {
 
 	token, err := signingToken(claims)
 	if err != nil {
-		return "", e.Wrap(err)
+		return "", errx.Trace(err)
 	}
 
 	return token, nil
@@ -87,7 +87,7 @@ func signingToken(claims jwt.MapClaims) (string, error) {
 	return token.SignedString([]byte(os.Getenv("JWT_SECRET")))
 }
 
-func GetJwtConfig(redisUtil redis.Util) fiber.Handler {
+func GetJwtConfig() fiber.Handler {
 	return jwtware.New(jwtware.Config{
 		SigningKey: jwtware.SigningKey{
 			JWTAlg: jwtware.HS256,
@@ -103,8 +103,8 @@ func GetJwtConfig(redisUtil redis.Util) fiber.Handler {
 
 			// email_hash가 redis에 있는지 조회하는 로직은 일단 추가하지 않음 -> 필요할 경우 추가 -> condition = sub == access_token
 			if strings.EqualFold(sub, accessString) {
-				if _, err := redisUtil.Get(context.Background(), id).Result(); err != nil {
-					return e.Wrap(err)
+				if _, err := redis.New().Get(context.Background(), id).Result(); err != nil {
+					return errx.Trace(err)
 				}
 			} else if strings.EqualFold(sub, refreshString) {
 				accessId := claims["access_id"].(string)

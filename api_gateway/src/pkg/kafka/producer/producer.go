@@ -4,7 +4,6 @@ import (
 	"sync"
 
 	"github.com/confluentinc/confluent-kafka-go/v2/kafka"
-	"github.com/gofiber/fiber/v2/log"
 )
 
 var once sync.Once
@@ -26,9 +25,9 @@ func New() *kafka.Producer {
 				switch ev := e.(type) {
 				case *kafka.Message:
 					if ev.TopicPartition.Error != nil {
-						log.Errorf("Delivery failed: %v\n", ev.TopicPartition)
+						// log.("Delivery failed: %v\n", ev.TopicPartition)
 					} else {
-						log.Infof("Delivered message to %v\n", ev.TopicPartition)
+						// log.Infof("Delivered message to %v\n", ev.TopicPartition)
 					}
 				}
 			}

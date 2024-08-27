@@ -33,7 +33,6 @@ func NewService() *Service {
 	return serviceInstance
 }
 
-// 유저 저장 -> transaction 구현
 func (s *Service) SaveUser(jwtTokenInfo dto.JwtTokenInfo) error {
 	pipe := s.redisUtil.TxPipeline()
 
@@ -78,5 +77,9 @@ func (s *Service) ChangeUserTag(user *entities.User) error {
 		return errx.Trace(err)
 	}
 
+	return nil
+}
+
+func (s *Service) GetUserProfile() error {
 	return nil
 }
